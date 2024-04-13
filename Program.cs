@@ -2,6 +2,11 @@
 {
     public static void Main(string[] args)
     {
+        TestAdjList();
+    }
+
+    private static void TestAdjList()
+    {
         Dictionary<char, HashSet<char>> graph = new Dictionary<char, HashSet<char>>
         {
             { 'a', new HashSet<char> { 'b', 'd' } },
@@ -18,7 +23,7 @@
 
         char start = 'g';
         char end = 'j';
-        List<char> path = BreadthFirstSearch(graph, start, end);
+        List<char> path = BreadthFirstSearchAdjList(graph, start, end);
         Console.Write("[");
         foreach (char node in path)
         {
@@ -26,8 +31,7 @@
         }
         Console.WriteLine(" ]");
     }
-
-    public static List<char> BreadthFirstSearch(Dictionary<char, HashSet<char>> graph, char start, char end)
+    public static List<char> BreadthFirstSearchAdjList(Dictionary<char, HashSet<char>> graph, char start, char end)
     {
         List<char> path = new List<char>();
         Dictionary<char, char> cameFrom = new Dictionary<char, char>();
