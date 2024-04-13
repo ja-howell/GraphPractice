@@ -3,6 +3,7 @@
     public static void Main(string[] args)
     {
         TestAdjList();
+        TestAdjMatrix();
     }
 
     private static void TestAdjList()
@@ -61,6 +62,88 @@
                 }
             }
         }
+        return path;
+    }
+
+    private static void TestAdjMatrix()
+    {
+
+        int[][] graph = new int[][] {
+        //    0  1  2  3  4  5  6  7  8  9
+            new int[] { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0},
+            new int[] { 0, 0, 1, 0, 1, 0, 0, 0, 0, 0},
+            new int[] { 0, 0, 0, 1, 0, 1, 1, 0, 1, 0},
+            new int[] { 0, 0, 0, 0, 0, 0, 1, 0, 1, 0},
+            new int[] { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+            new int[] { 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
+            new int[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+            new int[] { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+            new int[] { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+            new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+        };
+
+        var path = BreadthFirstSearchAdjMatrix(graph, 6, 9);
+        Console.Write("[ ");
+        foreach (var step in path)
+        {
+            Console.Write($"{step} ");
+        }
+        Console.WriteLine("]");
+
+    }
+
+    private static List<int> BreadthFirstSearchAdjMatrix(int[][] graph, int start, int end)
+    {
+        Dictionary<int, int> cameFrom = new Dictionary<int, int>();
+        Queue<int> frontier = new Queue<int>();
+        cameFrom[start] = start;
+        frontier.Enqueue(start);
+
+        while (frontier.Count > 0)
+        {
+            int u = frontier.Dequeue();
+
+            if (u == end)
+            {
+                return BuildPath(cameFrom, u);
+            }
+
+            List<int> neighbors = GetNeighbors(graph, u);
+            foreach (var v in neighbors)
+            {
+                if (!cameFrom.ContainsKey(v))
+                {
+                    frontier.Enqueue(v);
+                    cameFrom[v] = u;
+                }
+            }
+        }
+
+        return new List<int>();
+    }
+
+    private static List<int> GetNeighbors(int[][] graph, int u)
+    {
+        List<int> neighbors = new List<int>();
+        for (int v = 0; v < graph[u].Length; v++)
+        {
+            if (graph[u][v] == 1)
+            {
+                neighbors.Add(v);
+            }
+        }
+        return neighbors;
+    }
+
+    private static List<int> BuildPath(Dictionary<int, int> cameFrom, int u)
+    {
+        List<int> path = new List<int>();
+        while (cameFrom[u] != u)
+        {
+            path.Insert(0, u);
+            u = cameFrom[u];
+        }
+        path.Insert(0, u);
         return path;
     }
 }
