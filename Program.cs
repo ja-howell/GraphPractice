@@ -1,9 +1,12 @@
 ﻿public class Program
 {
+    enum Direction = {North, South, East, West};
+
     public static void Main(string[] args)
     {
         TestAdjList();
         TestAdjMatrix();
+        TestDownToOne();
     }
 
     private static void TestAdjList()
@@ -69,7 +72,7 @@
     {
 
         int[][] graph = new int[][] {
-        //    0  1  2  3  4  5  6  7  8  9
+                  //    0  1  2  3  4  5  6  7  8  9
             new int[] { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0},
             new int[] { 0, 0, 1, 0, 1, 0, 0, 0, 0, 0},
             new int[] { 0, 0, 0, 1, 0, 1, 1, 0, 1, 0},
@@ -145,5 +148,124 @@
         }
         path.Insert(0, u);
         return path;
+    }
+
+    private static void TestDownToOne()
+    {
+        int num = 10;
+        List<int> path = DownToOne(num);
+        Console.Write("[ ");
+        foreach (var node in path)
+        {
+            Console.Write($"{node} ");
+        }
+        Console.WriteLine("]");
+    }
+
+    private static List<int> DownToOne(int num)
+    {
+        Dictionary<int, int> cameFrom = new Dictionary<int, int>();
+        Queue<int> frontier = new Queue<int>();
+        cameFrom[num] = num;
+        frontier.Enqueue(num);
+
+        while (frontier.Count > 0)
+        {
+            int u = frontier.Dequeue();
+
+            if (u == 1)
+            {
+                return BuildPath(cameFrom, u);
+            }
+
+            List<int> children = GetChildren(u);
+            foreach (var v in children)
+            {
+                if (!cameFrom.ContainsKey(v))
+                {
+                    frontier.Enqueue(v);
+                    cameFrom[v] = u;
+                }
+            }
+        }
+        return new List<int>();
+    }
+
+    private static List<int> GetChildren(int u)
+    {
+        List<int> children = new List<int>();
+        if (u % 3 == 0)
+        {
+            children.Add(u / 3);
+        }
+        if (u % 2 == 0)
+        {
+            children.Add(u / 2);
+        }
+        children.Add(u - 1);
+        return children;
+    }
+
+//enum Direction = {North, South, East, West}
+    private static List<int> GetTurtlets(char[][] board, State state)
+    {
+        List<char> turtlets = new List<char>();
+        Direction dir = state.dir;
+        int row = state.row;
+        int col = state.col;
+        turtlets.Add('R');
+        turtlets.Add('L');
+        if (dir == North && row > 0 && board[row - 1][col] != 'C')
+        {
+            if (board[row - 1][col] == 'I')
+            {
+                turtlets.Add('X');
+            }
+            else
+            {
+                turtlets.Add('F');
+            }
+        }
+        if (dir == South && row < board.Length - 1 && board[row + 1][col] != 'C')
+        {
+            if (board[row + 1][col] == 'I')
+            {
+                turtlets.Add('X');
+            }
+            else
+            {
+                turtlets.Add('F');
+            }
+        }
+        if (dir == East && col < board[row].Length -1 && board[row][col + 1] != 'C')
+        {
+            if (board[row][col + 1] == 'I')
+            {
+                turtlets.Add('X');
+            }
+            else
+            {
+                turtlets.Add('F');
+            }
+        }
+        if (dir == West && col > 0 && board[row][col - 1] != 'C')
+        {
+            if (board[row][col - 1] == 'I')
+            {
+                turtlets.Add('X');
+            }
+            else
+            {
+                turtlets.Add('F');
+            }
+        }
+
+}
+    private class State
+    {
+        int row = {get, set};
+        int col = { get, set };
+        Direction dir = { get, set };
+
     }
 }
