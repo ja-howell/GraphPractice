@@ -1,12 +1,19 @@
 ﻿public class Program
 {
-    enum Direction = {North, South, East, West};
+    enum Direction
+    {
+        North,
+        East,
+        South,
+        West
+    }
 
     public static void Main(string[] args)
     {
         TestAdjList();
         TestAdjMatrix();
         TestDownToOne();
+        TestTurtlesBFS();
     }
 
     private static void TestAdjList()
@@ -70,7 +77,6 @@
 
     private static void TestAdjMatrix()
     {
-
         int[][] graph = new int[][] {
                   //    0  1  2  3  4  5  6  7  8  9
             new int[] { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0},
@@ -92,7 +98,6 @@
             Console.Write($"{step} ");
         }
         Console.WriteLine("]");
-
     }
 
     private static List<int> BreadthFirstSearchAdjMatrix(int[][] graph, int start, int end)
@@ -206,66 +211,221 @@
         return children;
     }
 
-//enum Direction = {North, South, East, West}
-    private static List<int> GetTurtlets(char[][] board, State state)
+    private static void TestTurtlesBFS()
     {
-        List<char> turtlets = new List<char>();
-        Direction dir = state.dir;
-        int row = state.row;
-        int col = state.col;
-        turtlets.Add('R');
-        turtlets.Add('L');
-        if (dir == North && row > 0 && board[row - 1][col] != 'C')
+        char[][] board = new char[][] {
+            new char[] { '.', '.', '.', '.', '.', '.', '.', '.'},
+            new char[] { '.', '.', '.', '.', '.', '.', '.', '.'},
+            new char[] { '.', '.', '.', '.', '.', '.', '.', '.'},
+            new char[] { '.', '.', '.', 'C', 'C', '.', '.', '.'},
+            new char[] { '.', '.', 'C', '.', 'D', 'C', '.', '.'},
+            new char[] { '.', 'C', '.', '.', 'C', '.', '.', '.'},
+            new char[] { 'C', '.', 'I', 'C', '.', '.', '.', '.'},
+            new char[] { 'T', '.', 'C', '.', '.', '.', '.', '.'}
+        };
+        string path = TurtlesBFS(board);
+        Console.WriteLine(path);
+    }
+    private static string TurtlesBFS(char[][] board)
+    {
+        Dictionary<State, State> cameFrom = new Dictionary<State, State>();
+        Queue<State> frontier = new Queue<State>();
+        Position position = new Position(7,0);
+        State start = new State(position, Direction.East, IsFacingIceCastle(board, position, Direction.East));
+        State copy = new State(position, Direction.East, IsFacingIceCastle(board, position, Direction.East));
+        cameFrom[start] = start;
+        frontier.Enqueue(start);
+        while (frontier.Count > 0)
         {
-            if (board[row - 1][col] == 'I')
+            State u = frontier.Dequeue();
+            if (board[u.position.row][u.position.col] == 'D')
             {
-                turtlets.Add('X');
+                return BuildTurtlePath(cameFrom, u);
             }
-            else
+
+            List<State> states = GetNextStates(board, u);
+            foreach (var v in states)
             {
-                turtlets.Add('F');
+                if (!cameFrom.ContainsKey(v))
+                {
+                    frontier.Enqueue(v);
+                    cameFrom[v] = u;
+                }
             }
         }
-        if (dir == South && row < board.Length - 1 && board[row + 1][col] != 'C')
+        return "no solution";
+    }
+
+    private static List<State> GetNextStates(char[][] board, State state)
+    {
+        List<State> states = new List<State>();
+        if (state.dir == Direction.North || state.dir == Direction.South)
         {
-            if (board[row + 1][col] == 'I')
-            {
-                turtlets.Add('X');
-            }
-            else
-            {
-                turtlets.Add('F');
-            }
+            states.Add(new State(state.position, Direction.East, IsFacingIceCastle(board, state.position, Direction.East)));
+            states.Add(new State(state.position, Direction.West, IsFacingIceCastle(board, state.position, Direction.West)));
         }
-        if (dir == East && col < board[row].Length -1 && board[row][col + 1] != 'C')
+        else
         {
-            if (board[row][col + 1] == 'I')
-            {
-                turtlets.Add('X');
-            }
-            else
-            {
-                turtlets.Add('F');
-            }
-        }
-        if (dir == West && col > 0 && board[row][col - 1] != 'C')
-        {
-            if (board[row][col - 1] == 'I')
-            {
-                turtlets.Add('X');
-            }
-            else
-            {
-                turtlets.Add('F');
-            }
+            states.Add(new State(state.position, Direction.North, IsFacingIceCastle(board, state.position, Direction.North)));
+            states.Add(new State(state.position, Direction.South, IsFacingIceCastle(board, state.position, Direction.South)));
         }
 
-}
+        Position position = GetNewPosition(state.position, state.dir);
+        if (IsInbounds(position.row, position.col, board)) 
+        {
+            if (state.iceCastle)
+            {
+                states.Add(new State(state.position, state.dir, false));
+            }
+            else if (board[position.row][position.col] != 'C')
+            {
+                states.Add(new State(position, state.dir, IsFacingIceCastle(board, position, state.dir)));
+            }
+        }
+        return states;
+    }
+
+    private static bool IsInbounds(int row, int col, char[][] board)
+    {
+        return 0 <= row && row < board[0].Length && 0 <= col && col < board[0].Length;
+    }
+
+    private static bool IsFacingIceCastle(char[][] board, Position position, Direction dir)
+    {
+        Position newPosition = GetNewPosition(position, dir);
+        if (IsInbounds(newPosition.row, newPosition.col, board))
+        {
+            return board[newPosition.row][newPosition.col] == 'I';
+        }
+        return false;
+    }
+
+    private static Position GetNewPosition(Position position, Direction dir)
+    {
+        int candidateRow = position.row;
+        int candidateCol = position.col;
+        switch (dir)
+        {
+            case Direction.West:
+                candidateCol = position.col - 1;
+                break;
+            case Direction.East:
+                candidateCol = position.col + 1;
+                break;
+            case Direction.North:
+                candidateRow = position.row - 1;
+                break;
+            case Direction.South:
+                candidateRow = position.row + 1;
+                break;
+        }
+        return new Position(candidateRow, candidateCol);
+    }
+
+    private static string BuildTurtlePath(Dictionary<State, State> cameFrom, State u)
+    {
+        string path = "";
+        Console.WriteLine("path");
+        while(cameFrom[u] != u)
+        {
+            if (u.position.row != cameFrom[u].position.row || u.position.col != cameFrom[u].position.col)
+            {
+                path = 'F' + path;
+            }
+            else if (u.dir != cameFrom[u].dir)
+            {
+                path = CalculateDirectionChange(u, cameFrom[u]) + path;
+            }
+            else
+            {
+                path = 'X' + path;
+            }
+            u = cameFrom[u];
+        }
+        return path;
+    }
+    
+    private static char CalculateDirectionChange(State child, State parent)
+    {
+        if (child.dir == Direction.North)
+        {
+            if (parent.dir == Direction.East)
+            {
+                return 'L';
+            }
+            return 'R';
+        }
+        else if (child.dir == Direction.South)
+        {
+            if (parent.dir == Direction.West)
+            {
+                return 'L';
+            }
+            return 'R';
+        }
+        else if (child.dir == Direction.East)
+        {
+            if (parent.dir == Direction.South)
+            {
+                return 'L';
+            }
+            return 'R';
+        }
+        else
+        {
+            if (parent.dir == Direction.North)
+            {
+                return 'L';
+            }
+            return 'R';
+        }
+    }
+
     private class State
     {
-        int row = {get, set};
-        int col = { get, set };
-        Direction dir = { get, set };
+        public State(Position position, Direction dir, bool iceCastle)
+        {
+            this.position = position;
+            this.dir = dir;
+            this.iceCastle = iceCastle;
+        }
+        public Position position { get; set; }
+        public Direction dir { get; set; }
+        public bool iceCastle { get; set; }
 
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+                return false;
+
+            State other = (State)obj;
+            return position.Equals(other.position) &&
+                   dir == other.dir &&
+                   iceCastle == other.iceCastle;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = (hash * 23) + position.GetHashCode();
+                hash = (hash * 23) + dir.GetHashCode();
+                hash = (hash * 23) + iceCastle.GetHashCode();
+                return hash;
+            }
+        }
+
+    }
+
+    private class Position
+    {
+        public Position(int row, int col)
+        {
+            this.row = row;
+            this.col = col;
+        }
+        public int row { get; set; }
+        public int col { get; set; }
     }
 }
